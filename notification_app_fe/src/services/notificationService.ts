@@ -1,3 +1,5 @@
+import { Log } from "../logging_middleware/log";
+
 export type Notification = {
     ID: string;
     Type: "Placement" | "Result" | "Event";
@@ -5,19 +7,29 @@ export type Notification = {
     Timestamp: string;
 };
 
-const API_URL =
-    "http://20.207.122.201/evaluation-service/notifications";
-
 export async function fetchNotifications(token: string) {
-    const response = await fetch(API_URL, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+    try {
+        Log("frontend", "info", "api", "Calling notifications API");
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
+        const response = await fetch(
+            "http://20.207.122.201/evaluation-service/notifications",
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (!response.ok) {
+            Log("frontend", "error", "api", "Notifications API failed");
+            throw new Error("Failed to fetch notifications");
+        }
+
+        Log("frontend", "info", "api", "Notifications fetched successfully");
+
+        return response.json();
+    } catch (error) {
+        Log("frontend", "fatal", "api", "Notifications API crashed");
+        throw error;
     }
-
-    return response.json();
 }
