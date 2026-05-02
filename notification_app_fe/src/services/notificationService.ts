@@ -1,4 +1,4 @@
-import { Log } from "../logging_middleware/log";
+import { Log } from "../../../logging_middleware/log";
 
 export type Notification = {
     ID: string;
@@ -7,29 +7,40 @@ export type Notification = {
     Timestamp: string;
 };
 
-export async function fetchNotifications(token: string) {
-    try {
-        Log("frontend", "info", "api", "Calling notifications API");
+const API_URL =
+    "http://20.207.122.201/evaluation-service/notifications";
 
-        const response = await fetch(
-            "http://20.207.122.201/evaluation-service/notifications",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+export async function fetchNotifications(
+    token: string,
+    limit?: number,
+    page?: number,
+    type?: string
+) {
+    try {
+        let url = `${API_URL}?`;
+
+        if (limit) url += `limit=${limit}&`;
+        if (page) url += `page=${page}&`;
+        if (type) url += `notification_type=${type}`;
+
+        Log("frontend", "info", "api", `Fetch limit=${limit||'all'} p=${page||1} t=${type||'all'}`);
+
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
         if (!response.ok) {
-            Log("frontend", "error", "api", "Notifications API failed");
-            throw new Error("Failed to fetch notifications");
+            Log("frontend", "error", "api", "Notification fetch failed");
+            throw new Error("API error");
         }
 
         Log("frontend", "info", "api", "Notifications fetched successfully");
 
         return response.json();
-    } catch (error) {
-        Log("frontend", "fatal", "api", "Notifications API crashed");
-        throw error;
+    } catch {
+        Log("frontend", "fatal", "api", "Notification API crashed");
+        throw new Error("Fetch failed");
     }
 }
